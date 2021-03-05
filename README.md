@@ -3,7 +3,7 @@
 
 This is a plugin for [Noesis](https://richwhitehouse.com/index.php?content=inc_projects.php&showproject=91) which allows the user to view textured 3D Models and animations from the game Metal Gear Solid 3: Snake Eater.
 
-I would ike to thank [revel8n](https://github.com/revel8n) for showing me how the face indices in the game are read. This project uses Victor Suba's PS2 GS layout swizzling code. 
+I would like to thank [revel8n](https://github.com/revel8n) for showing me how the face indices in the game are read. This project uses Victor Suba's PS2 GS layout swizzling code. 
 
 ![picture](https://github.com/Jayveer/MGS-MDL-Noesis/blob/master/model.png?raw=true)
 
