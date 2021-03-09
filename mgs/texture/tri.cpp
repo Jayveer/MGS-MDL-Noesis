@@ -180,6 +180,7 @@ uint8_t* Tri::getTextureIndexed(int idx, int& size) {
 
 	uint8_t* pixels = paintPixels((TriColour*)clutBuffer, expandedOut, texWidth, texHeight, texWidth, size, 0, 0);
 	delete[] expandedOut;
+	delete[] clutBuffer;
 
 	uint8_t* tga = makeTGA(pixels, size, texWidth, texHeight);
 	delete[] pixels;
