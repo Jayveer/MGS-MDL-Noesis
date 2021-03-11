@@ -27,25 +27,30 @@ void bindVertex(int16_t* fvf, std::vector<float>& vertexBuffer, float scale) {
 }
 
 inline
-void bindNormal(int16_t* fvf, std::vector<int16_t>& normalBuffer) {
-    normalBuffer.push_back(fvf[4]);
-    normalBuffer.push_back(fvf[5]);
-    normalBuffer.push_back(fvf[6]);
+void bindNormal(int16_t* fvf, std::vector<float>& normalBuffer) {
+    float scale = 1.0f / 4096.0f;
+
+    normalBuffer.push_back(fvf[4] * scale);
+    normalBuffer.push_back(fvf[5] * scale);
+    normalBuffer.push_back(fvf[6] * scale);
 }
 
 inline
-void bindFace(int16_t* fvf, uint16_t fc, std::vector<uint16_t>& faceBuffer) {
+void bindFace(int16_t* fvf, uint16_t fc, std::vector<uint16_t>& faceBuffer, bool& flip) {
     if (fvf[3] & 0x8000) return;
 
     uint16_t fa = fc < 3 ? 0 : fc - 2;
     uint16_t fb = fc < 2 ? 0 : fc - 1;
 
+    if (flip) {
+        uint16_t temp = fb;
+        fb = fc;
+        fc = temp;
+    }
+
     faceBuffer.push_back(fa);
     faceBuffer.push_back(fb);
     faceBuffer.push_back(fc);
-    faceBuffer.push_back(fa);
-    faceBuffer.push_back(fc);
-    faceBuffer.push_back(fb);
 }
 
 inline
@@ -99,27 +104,29 @@ void setOrigin(MdlMesh* mesh, noeRAPI_t* rapi) {
 }
 
 inline
-void bindMesh(MdlMesh* mesh, BYTE* fileBuffer, noeRAPI_t* rapi, CArrayList<noesisMaterial_t*>& matList, CArrayList<noesisTex_t*>& texList, bool isMDB) {
+void bindMesh(MdlMesh* mesh, BYTE* fileBuffer, noeRAPI_t* rapi, CArrayList<noesisMaterial_t*>& matList, CArrayList<noesisTex_t*>& texList, bool isMDB, bool isMDC1) {
     float scale = 1.0f;
-    if (!isMDB) scale /= 16.0f;
+    if (!isMDB && !isMDC1) scale /= 16.0f;
 
     if (isMDB) setOrigin(mesh, rapi);
-
+        
     for (int i = 0; i < mesh->numVertexDefinition; i++) {
         std::vector<float> uvBuffer, uvBuffer2, uvBuffer3, weightBuffer, vertexBuffer;
         std::vector<uint8_t>  boneBuffer;
         std::vector<uint16_t> faceBuffer;
-        std::vector<int16_t> normalBuffer;
+        std::vector<float> normalBuffer;
 
         MdlVertexDefinition*  vertDef   = (MdlVertexDefinition*)&fileBuffer[mesh->vertexDefinitionOffset];
         MdlVertexDefinitionAB vertDefAB = makeJointVertexDef(&vertDef[i], mesh, isMDB);
         void* vertexIndex = &fileBuffer[vertDefAB.vertexIndexOffset];
 
+        bool flip = 0;
         for (int j = 0; j < vertDefAB.numVertexIndex; j++) {
             int16_t* fvf = (int16_t*)vertexIndex;
 
             bindVertex(fvf, vertexBuffer, scale);
-            bindFace(fvf, j, faceBuffer);
+            bindFace(fvf, j, faceBuffer, flip);
+
             bindNormal(fvf, normalBuffer);
             if (!isMDB) bindSkin(fvf, vertDefAB.numWeights, vertDefAB.skinningTable, weightBuffer, boneBuffer, vertDefAB.stride == 6);
             bindUV(fvf, vertDefAB.flag, uvBuffer, uvBuffer2, uvBuffer3);
@@ -138,6 +145,8 @@ void bindMesh(MdlMesh* mesh, BYTE* fileBuffer, noeRAPI_t* rapi, CArrayList<noesi
         if (!uvBuffer.empty()) rapi->rpgBindUV1BufferSafe(&uvBuffer[0], RPGEODATA_FLOAT, 8, uvBuffer.size() * 4);
         if (!uvBuffer2.empty()) rapi->rpgBindUV2BufferSafe(&uvBuffer2[0], RPGEODATA_FLOAT, 8, uvBuffer2.size() * 4);
         if (!uvBuffer3.empty()) rapi->rpgBindUVXBufferSafe(&uvBuffer3[0], RPGEODATA_FLOAT, 8, 2, 2, uvBuffer3.size() * 4);
+
+        rapi->rpgBindNormalBufferSafe(&normalBuffer[0], RPGEODATA_FLOAT, 12, normalBuffer.size() * 4);
         rapi->rpgBindPositionBufferSafe(&vertexBuffer[0], RPGEODATA_FLOAT, 12, vertexBuffer.size() * 4);
         rapi->rpgCommitTriangles(&faceBuffer[0], RPGEODATA_USHORT, faceBuffer.size(), RPGEO_TRIANGLE, 0);
         rapi->rpgClearBufferBinds();
