@@ -96,8 +96,7 @@
       <ModuleDefinitionFile>.\noesisplugin.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>COPY /Y /V "$(TargetPath)" /B "E:\Applications\Extraction\Noesis\noesisv444\plugins\" /B</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
