@@ -8,8 +8,7 @@ I would like to thank [revel8n](https://github.com/revel8n) for showing me how t
 ![picture](https://github.com/Jayveer/MGS-MDL-Noesis/blob/master/model.png?raw=true)
 
 ### Latest Changes
- - Added Normals
- - Fixed size if MDC1
+ - Fixed a problem where textures weren't auto applying on export
 
 ### To Do
  - Find out indices winding order
