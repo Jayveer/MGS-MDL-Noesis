@@ -84,8 +84,10 @@ void bindMat(uint32_t strcode[3], BYTE* fileBuffer, noeRAPI_t* rapi, CArrayList<
 
         if (!strcode[i]) continue;
 
-        char texName[7];
-        strcpy_s(texName, str[i].c_str());
+        std::string fullName = str[i] + ".tga";
+
+        char texName[11];
+        strcpy_s(texName, fullName.c_str());
 
         //check if texture already exists
         int y = findTextureIdx(texName, texList);

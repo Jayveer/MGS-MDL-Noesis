@@ -42,15 +42,15 @@ void bindFace(int16_t* fvf, uint16_t fc, std::vector<uint16_t>& faceBuffer, bool
     uint16_t fa = fc < 3 ? 0 : fc - 2;
     uint16_t fb = fc < 2 ? 0 : fc - 1;
 
-    if (flip) {
-        uint16_t temp = fb;
-        fb = fc;
-        fc = temp;
+    if (!flip) {
+        faceBuffer.push_back(fa);
+        faceBuffer.push_back(fb);
+        faceBuffer.push_back(fc);
+    } else {
+        faceBuffer.push_back(fa);
+        faceBuffer.push_back(fc);
+        faceBuffer.push_back(fb);
     }
-
-    faceBuffer.push_back(fa);
-    faceBuffer.push_back(fb);
-    faceBuffer.push_back(fc);
 }
 
 inline
@@ -109,7 +109,8 @@ void bindMesh(MdlMesh* mesh, BYTE* fileBuffer, noeRAPI_t* rapi, CArrayList<noesi
     if (!isMDB && !isMDC1) scale /= 16.0f;
 
     if (isMDB) setOrigin(mesh, rapi);
-        
+
+    int x = 1;
     for (int i = 0; i < mesh->numVertexDefinition; i++) {
         std::vector<float> uvBuffer, uvBuffer2, uvBuffer3, weightBuffer, vertexBuffer;
         std::vector<uint8_t>  boneBuffer;
@@ -119,19 +120,22 @@ void bindMesh(MdlMesh* mesh, BYTE* fileBuffer, noeRAPI_t* rapi, CArrayList<noesi
         MdlVertexDefinition*  vertDef   = (MdlVertexDefinition*)&fileBuffer[mesh->vertexDefinitionOffset];
         MdlVertexDefinitionAB vertDefAB = makeJointVertexDef(&vertDef[i], mesh, isMDB);
         void* vertexIndex = &fileBuffer[vertDefAB.vertexIndexOffset];
-
+                
         bool flip = 0;
         for (int j = 0; j < vertDefAB.numVertexIndex; j++) {
+            
             int16_t* fvf = (int16_t*)vertexIndex;
 
             bindVertex(fvf, vertexBuffer, scale);
             bindFace(fvf, j, faceBuffer, flip);
-
             bindNormal(fvf, normalBuffer);
             if (!isMDB) bindSkin(fvf, vertDefAB.numWeights, vertDefAB.skinningTable, weightBuffer, boneBuffer, vertDefAB.stride == 6);
             bindUV(fvf, vertDefAB.flag, uvBuffer, uvBuffer2, uvBuffer3);
 
+            if (fvf[3] & 0x8000) flip = 0;
+
             vertexIndex = (uint8_t*)vertexIndex + (vertDefAB.stride * 8);
+            x++;
         }
 
         uint32_t textures[3] = { vertDefAB.textureStrcode, vertDefAB.texture2Strcode, vertDefAB.texture3Strcode };
